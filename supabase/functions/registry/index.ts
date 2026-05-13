@@ -20,22 +20,36 @@ const SCHEMA = "https://schemas.agentskills.io/discovery/0.2.0/schema.json"
 const SKILLS = {
   supabase: {
     name: "supabase",
-    description: "Use when doing ANY task involving Supabase. Triggers: Supabase products (Database, Auth, Edge Functions, Realtime, Storage, Vectors, Cron, Queues); client libraries and SSR integrations (supabase-js, @supabase/ssr) in Next.js, React, SvelteKit, Astro, Remix; auth issues (login, logout, sessions, JWT, cookies, getSession, getUser, getClaims, RLS); Supabase CLI or MCP server; schema changes, migrations, security audits, Postgres extensions (pg_graphql, pg_cron, pg_vector).",
     versions: {
-      "0.1.0": { digest: "sha256:3f4a2b1c9e8d7f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a", published_at: "2026-03-10T10:00:00.000Z" },
-      "0.1.1": { digest: "sha256:807c5a126a4c0c03fa2c96afaf6e9cc02e35f611726d8fde8001e6623fe117a1", published_at: "2026-05-13T16:45:39.999Z" },
+      // v0.1.0 — SKILL.md only (no references), shorter initial description
+      "0.1.0": {
+        description: "Use when doing ANY task involving Supabase — database, auth, edge functions, storage, and realtime.",
+        digest: "sha256:b08a2e40259f3ae3473b70f5dd35f1b53061b465b70447059303d945089a979c",
+        published_at: "2026-03-10T10:00:00.000Z",
+      },
+      // v0.1.1 — SKILL.md + full references/, expanded trigger description
+      "0.1.1": {
+        description: "Use when doing ANY task involving Supabase. Triggers: Supabase products (Database, Auth, Edge Functions, Realtime, Storage, Vectors, Cron, Queues); client libraries and SSR integrations (supabase-js, @supabase/ssr) in Next.js, React, SvelteKit, Astro, Remix; auth issues (login, logout, sessions, JWT, cookies, getSession, getUser, getClaims, RLS); Supabase CLI or MCP server; schema changes, migrations, security audits, Postgres extensions (pg_graphql, pg_cron, pg_vector).",
+        digest: "sha256:807c5a126a4c0c03fa2c96afaf6e9cc02e35f611726d8fde8001e6623fe117a1",
+        published_at: "2026-05-13T16:45:39.999Z",
+      },
     },
   },
   "supabase-postgres-best-practices": {
     name: "supabase-postgres-best-practices",
-    description: "Postgres performance optimization and best practices from Supabase. Use this skill when writing, reviewing, or optimizing Postgres queries, schema designs, or database configurations.",
     versions: {
-      "0.1.1": { digest: "sha256:1bbc12e371a3400fb3e525b530d5ba1673343108e2ea8ae62004d723472df2b9", published_at: "2026-05-13T16:48:00.000Z" },
+      // First version of this skill — debuted in release v0.1.1 at its own v0.1.0
+      "0.1.0": {
+        description: "Postgres performance optimization and best practices from Supabase. Use this skill when writing, reviewing, or optimizing Postgres queries, schema designs, or database configurations.",
+        digest: "sha256:1bbc12e371a3400fb3e525b530d5ba1673343108e2ea8ae62004d723472df2b9",
+        published_at: "2026-05-13T16:48:00.000Z",
+      },
     },
   },
 }
 
-// Release snapshots — each captures ALL skills at a point in time
+// Release snapshots — release version is independent of each skill's version.
+// v0.1.1 includes supabase@0.1.1 and supabase-postgres-best-practices@0.1.0.
 const RELEASES: Record<string, { released_at: string; skills: { name: string; version: string }[] }> = {
   "0.1.0": {
     released_at: "2026-03-10T10:00:00.000Z",
@@ -45,7 +59,7 @@ const RELEASES: Record<string, { released_at: string; skills: { name: string; ve
     released_at: "2026-05-13T16:48:00.000Z",
     skills: [
       { name: "supabase", version: "0.1.1" },
-      { name: "supabase-postgres-best-practices", version: "0.1.1" },
+      { name: "supabase-postgres-best-practices", version: "0.1.0" },
     ],
   },
 }
@@ -55,7 +69,7 @@ function skillEntry(name: string, version: string) {
   const v = skill.versions[version as keyof typeof skill.versions]
   return {
     name,
-    description: skill.description,
+    description: v.description,
     version,
     type: "archive",
     url: `${name}.tar.gz`,

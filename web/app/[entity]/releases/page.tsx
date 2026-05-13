@@ -58,7 +58,10 @@ export default async function ReleasesPage({ params }: Props) {
             <div key={version} className="rounded-xl border border-zinc-200 bg-white overflow-hidden">
               <div className="px-6 py-4 border-b border-zinc-100 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <span className="font-mono text-sm font-semibold">v{version}</span>
+                  <Link href={`/${entityId}/releases/v${version}`}
+                    className="font-mono text-sm font-semibold hover:text-zinc-600 transition-colors">
+                    v{version}
+                  </Link>
                   {i === 0 && (
                     <span className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full px-2 py-0.5">
                       latest

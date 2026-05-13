@@ -32,8 +32,10 @@ export interface SkillVersionsResponse {
   versions: SkillVersion[]
 }
 
+const REVALIDATE = process.env.NODE_ENV === "development" ? 0 : 60
+
 async function get<T>(base: string, path: string): Promise<T> {
-  const res = await fetch(`${base}/${path}`, { next: { revalidate: 60 } })
+  const res = await fetch(`${base}/${path}`, { next: { revalidate: REVALIDATE } })
   if (!res.ok) throw new Error(`GET ${path} → ${res.status}`)
   return res.json()
 }

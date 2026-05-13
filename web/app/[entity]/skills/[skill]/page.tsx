@@ -71,7 +71,8 @@ export default async function SkillPage({ params }: Props) {
             ) : (
               <div className="divide-y divide-zinc-100">
                 {skillVersions.versions.map((v, i) => (
-                  <div key={v.version} className="px-6 py-4 flex items-center justify-between gap-4">
+                  <Link key={v.version} href={`/${entityId}/skills/${skill.name}/v${v.version}`}
+                    className="flex items-center justify-between px-6 py-4 hover:bg-zinc-50 transition-colors group">
                     <div className="flex items-center gap-3">
                       <span className="font-mono text-sm font-medium">v{v.version}</span>
                       {i === 0 && (
@@ -87,8 +88,9 @@ export default async function SkillPage({ params }: Props) {
                           day: "numeric", month: "short", year: "numeric",
                         })}
                       </time>
+                      <span className="text-zinc-300 group-hover:text-zinc-500 transition-colors">→</span>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}
