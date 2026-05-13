@@ -1,4 +1,6 @@
-const BASE = process.env.REGISTRY_URL ?? "https://evvgbjqrweflsauugoaj.supabase.co/functions/v1/registry"
+// Fetches .well-known/agent-skills/* endpoints from a publisher's base URL.
+// Artifact URLs in index.json are resolved per RFC 3986 §5.2.2 against the index URL.
+// https://datatracker.ietf.org/doc/html/rfc3986#section-5.2.2
 
 export interface SkillEntry {
   name: string
@@ -30,13 +32,20 @@ export interface SkillVersionsResponse {
   versions: SkillVersion[]
 }
 
-async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE}/${path}`, { next: { revalidate: 60 } })
+async function get<T>(base: string, path: string): Promise<T> {
+  const res = await fetch(`${base}/${path}`, { next: { revalidate: 60 } })
   if (!res.ok) throw new Error(`GET ${path} → ${res.status}`)
   return res.json()
 }
 
-export const getIndex = () => get<Index>("index.json")
-export const getVersionsIndex = () => get<VersionsIndex>("versions.json")
-export const getVersionedIndex = (version: string) => get<Index>(`v${version}/index.json`)
-export const getSkillVersions = (name: string) => get<SkillVersionsResponse>(`${name}/versions.json`)
+export const getIndex = (base: string) =>
+  get<Index>(base, "index.json")
+
+export const getVersionsIndex = (base: string) =>
+  get<VersionsIndex>(base, "versions.json")
+
+export const getVersionedIndex = (base: string, version: string) =>
+  get<Index>(base, `v${version}/index.json`)
+
+export const getSkillVersions = (base: string, name: string) =>
+  get<SkillVersionsResponse>(base, `${name}/versions.json`)

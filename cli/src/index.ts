@@ -1,23 +1,23 @@
 #!/usr/bin/env node
 // skillpm — agent skills registry CLI
-// Usage: skillpm <command> [args] [flags]
-//
-// Commands:
-//   publish <skill-dir> --version <semver> [--release]   publish a skill
-//   install <skill>[@version]                             install a skill
-//   list                                                  list all skills in the registry
-//   versions <skill>                                      list versions of a skill
 
 import { parseArgs } from "node:util"
-import { publish  } from "./commands/publish.ts"
-import { install  } from "./commands/install.ts"
-import { list     } from "./commands/list.ts"
-import { versions } from "./commands/versions.ts"
+import { publish    } from "./commands/publish.ts"
+import { install    } from "./commands/install.ts"
+import { list       } from "./commands/list.ts"
+import { versions   } from "./commands/versions.ts"
+import { init       } from "./commands/init.ts"
+import { validate   } from "./commands/validate.ts"
+import { deprecate  } from "./commands/deprecate.ts"
 
 const HELP = `
 skillpm — agent skills registry CLI
 
 Commands:
+  init <skill-dir>      Scaffold a new skill directory with SKILL.md template
+
+  validate <skill-dir>  Validate a skill without publishing (dry-run)
+
   publish <skill-dir>   Publish a skill to the registry
     --version <semver>  Required. Version to publish (e.g. 1.0.0)
     --release           Also create a registry-level versioned release snapshot
@@ -31,9 +31,16 @@ Commands:
 
   list                  List all skills in the registry
     --registry <url>
+    --search <query>    Filter skills by name substring
 
   versions <skill>      List all published versions of a skill
     --registry <url>
+
+  deprecate <skill>     Mark a skill as deprecated (or deleted)
+    --message <msg>     Optional deprecation message
+    --delete            Mark as deleted instead of deprecated
+    --registry <url>
+    --token <key>
 
 Config (~/.skillpmrc):
   { "registry": "https://your-registry.com", "token": "your-service-role-key" }
@@ -50,6 +57,9 @@ const { positionals, values } = parseArgs({
     release:  { type: "boolean" },
     registry: { type: "string" },
     token:    { type: "string" },
+    message:  { type: "string" },
+    delete:   { type: "boolean" },
+    search:   { type: "string" },
     help:     { type: "boolean", short: "h" },
   },
 })
@@ -64,10 +74,13 @@ const [command, ...rest] = positionals
 const flags = values as Record<string, string | boolean>
 
 switch (command) {
-  case "publish":  await publish(rest, flags);  break
-  case "install":  await install(rest, flags);  break
-  case "list":     await list(rest, flags);     break
-  case "versions": await versions(rest, flags); break
+  case "init":       await init(rest, flags);       break
+  case "validate":   await validate(rest, flags);   break
+  case "publish":    await publish(rest, flags);     break
+  case "install":    await install(rest, flags);     break
+  case "list":       await list(rest, flags);        break
+  case "versions":   await versions(rest, flags);    break
+  case "deprecate":  await deprecate(rest, flags);   break
   default:
     console.error(`Unknown command: ${command}\n`)
     console.log(HELP)

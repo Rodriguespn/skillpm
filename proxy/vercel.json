@@ -2,6 +2,14 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
+      "source": "/publish",
+      "destination": "https://<YOUR_SUPABASE_PROJECT_REF>.supabase.co/functions/v1/publish"
+    },
+    {
+      "source": "/status",
+      "destination": "https://<YOUR_SUPABASE_PROJECT_REF>.supabase.co/functions/v1/publish/status"
+    },
+    {
       "source": "/.well-known/agent-skills/:path*",
       "destination": "https://<YOUR_SUPABASE_PROJECT_REF>.supabase.co/functions/v1/registry/:path*"
     }

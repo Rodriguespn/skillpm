@@ -1,5 +1,5 @@
 // skillpm publish edge function
-// Handles skill publishing from the CLI.
+// Handles skill publishing and status updates from the CLI.
 //
 // POST /publish
 //   Authorization: Bearer {SKILLPM_TOKEN}
@@ -9,19 +9,23 @@
 //     description — skill description (from SKILL.md frontmatter)
 //     tarball     — binary .tar.gz file
 //     release     — "true" | "false"
-//                   if "true", also snapshots a registry-level release entry
-//                   combining all current skill versions into a versioned index.json
+//
+// PATCH /status
+//   Authorization: Bearer {SKILLPM_TOKEN}
+//   Body: JSON { skill, status: "deprecated"|"deleted", message?: string }
 
 import { createClient } from "jsr:@supabase/supabase-js@2"
 import { storagePathForVersion, storagePathLatest } from "../_shared/storage.ts"
 
 const SCHEMA = "https://schemas.agentskills.io/discovery/0.2.0/schema.json"
+const VALID_STATUSES = ["active", "deprecated", "deleted"] as const
+type SkillStatus = typeof VALID_STATUSES[number]
 
 Deno.serve(async (req) => {
-  if (req.method !== "POST") return json({ error: "method not allowed" }, 405)
+  const url = new URL(req.url)
+  const path = url.pathname.replace(/^\/functions\/v1\/publish/, "").replace(/^\//, "")
 
-  // Auth: the CLI sends the service role key as a Bearer token.
-  // Service role bypasses RLS so the function can write to all tables.
+  // Auth: Bearer token must match SKILLPM_TOKEN env var
   const authHeader = req.headers.get("Authorization") ?? ""
   const token = authHeader.replace(/^Bearer /, "")
   if (!token || token !== Deno.env.get("SKILLPM_TOKEN")) {
@@ -32,6 +36,39 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   )
+
+  // PATCH /status — lifecycle status update (deprecate/delete)
+  if (req.method === "PATCH" && path === "status") {
+    let body: { skill?: string; status?: string; message?: string }
+    try {
+      body = await req.json()
+    } catch {
+      return json({ error: "invalid JSON body" }, 400)
+    }
+
+    const { skill, status, message } = body
+
+    if (!skill) return json({ error: "missing required field: skill" }, 400)
+    if (!status || !VALID_STATUSES.includes(status as SkillStatus)) {
+      return json({ error: `status must be one of: ${VALID_STATUSES.join(", ")}` }, 400)
+    }
+
+    const { error } = await supabase
+      .from("skills")
+      .update({
+        status,
+        status_message: message ?? null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("name", skill)
+
+    if (error) return json({ error: error.message }, 500)
+
+    return json({ ok: true, skill, status, message: message ?? null }, 200)
+  }
+
+  // POST /publish — publish a new skill version
+  if (req.method !== "POST") return json({ error: "method not allowed" }, 405)
 
   let formData: FormData
   try {
@@ -81,13 +118,15 @@ Deno.serve(async (req) => {
     .from("artifacts")
     .upload(latestPath, bytes, { contentType: "application/gzip", upsert: true })
 
-  // Upsert into skills (latest pointer)
+  // Upsert into skills (latest pointer); reset status to active on new publish
   const { error: skillErr } = await supabase.from("skills").upsert({
     name: skill,
     description,
     current_version: version,
     digest,
     storage_path: versionedPath,
+    status: "active",
+    status_message: null,
     updated_at: new Date().toISOString(),
   })
   if (skillErr) return json({ error: skillErr.message }, 500)
@@ -101,11 +140,12 @@ Deno.serve(async (req) => {
   })
   if (versionErr) return json({ error: versionErr.message }, 500)
 
-  // If --release flag: snapshot current state of all skills into a release entry
+  // If --release flag: snapshot current state of all active skills into a release entry
   if (isRelease) {
     const { data: allSkills, error: allErr } = await supabase
       .from("skills")
       .select("name, description, current_version, digest")
+      .neq("status", "deleted")
     if (allErr) return json({ error: allErr.message }, 500)
 
     const indexJson = {
@@ -126,7 +166,6 @@ Deno.serve(async (req) => {
     })
     if (releaseErr) return json({ error: `release snapshot failed: ${releaseErr.message}` }, 500)
 
-    // Record which skill versions are in this release
     const releaseSkills = (allSkills ?? []).map((s) => ({
       release_version: version,
       skill_name: s.name,

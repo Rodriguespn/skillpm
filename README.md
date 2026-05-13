@@ -124,7 +124,8 @@ This prints your local `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVIC
 ### 2. Apply the schema
 
 ```bash
-supabase db push
+supabase migration up    # local only — no project link required
+# or: supabase db reset  # if you want a full reset + replay
 ```
 
 Creates four tables: `skills`, `skill_versions`, `releases`, `release_skills`. See `supabase/migrations/0001_initial.sql` for the full schema and RLS policies.
@@ -199,7 +200,7 @@ supabase link --project-ref <your-project-ref>
 ### Step 2 — Apply schema and create bucket
 
 ```bash
-supabase db push
+supabase db push    # pushes local migrations to the linked remote project
 ```
 
 Create the `artifacts` bucket in the dashboard (Storage → New bucket → `artifacts`, public).
