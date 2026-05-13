@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import { getEntity } from "@/lib/entities"
-import { getIndex, getVersionsIndex } from "@/lib/registry"
+import { getIndex } from "@/lib/registry"
 
 export const revalidate = 60
 
@@ -12,10 +12,7 @@ export default async function EntityPage({ params }: Props) {
   const entity = getEntity(entityId)
   if (!entity) notFound()
 
-  const [index, versionsIndex] = await Promise.all([
-    getIndex(entity.wellKnownBase).catch(() => ({ $schema: "", skills: [] })),
-    getVersionsIndex(entity.wellKnownBase).catch(() => ({ latest: null, versions: [] })),
-  ])
+  const index = await getIndex(entity.wellKnownBase).catch(() => ({ $schema: "", skills: [] }))
 
   return (
     <div>
@@ -42,30 +39,21 @@ export default async function EntityPage({ params }: Props) {
               GitHub ↗
             </a>
           )}
-          <Link href={`/${entityId}/releases`}
-            className="text-xs text-zinc-500 border border-zinc-200 rounded-lg px-3 py-1.5 hover:border-zinc-400 transition-colors bg-white">
-            {versionsIndex.versions.length} releases →
-          </Link>
         </div>
       </div>
 
-      {/* Well-known source */}
+      {/* Source */}
       <div className="mb-8 flex items-center gap-2 text-xs text-zinc-400 bg-white border border-zinc-200 rounded-lg px-4 py-3">
-        <span className="shrink-0">Source</span>
+        <span className="shrink-0">Served from</span>
         <code className="font-mono text-zinc-500 truncate">{entity.wellKnownBase}/index.json</code>
         <a href={`${entity.wellKnownBase}/index.json`} target="_blank" rel="noopener noreferrer"
           className="ml-auto shrink-0 hover:text-zinc-600 transition-colors">↗</a>
       </div>
 
-      {/* Stats */}
-      <div className="mb-8 grid grid-cols-3 gap-4">
-        <StatCard label="Skills" value={String(index.skills.length)} />
-        <StatCard label="Releases" value={String(versionsIndex.versions.length)} />
-        <StatCard label="Latest" value={versionsIndex.latest ? `v${versionsIndex.latest}` : "—"} mono />
-      </div>
-
       {/* Skills */}
-      <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-4">Skills</h2>
+      <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-4">
+        {index.skills.length} skill{index.skills.length !== 1 ? "s" : ""}
+      </h2>
       {index.skills.length === 0 ? (
         <div className="rounded-xl border border-dashed border-zinc-300 p-10 text-center text-sm text-zinc-400">
           No skills found at this endpoint
@@ -78,9 +66,11 @@ export default async function EntityPage({ params }: Props) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2.5 mb-1">
                   <span className="font-mono text-sm font-semibold text-zinc-900">{skill.name}</span>
-                  <span className="font-mono text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full px-2 py-0.5">
-                    v{skill.version}
-                  </span>
+                  {skill.version && (
+                    <span className="font-mono text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full px-2 py-0.5">
+                      v{skill.version}
+                    </span>
+                  )}
                   <span className="text-xs bg-zinc-100 text-zinc-500 rounded-full px-2 py-0.5">{skill.type}</span>
                 </div>
                 <p className="text-sm text-zinc-500 line-clamp-1">{skill.description}</p>
@@ -93,15 +83,6 @@ export default async function EntityPage({ params }: Props) {
           ))}
         </div>
       )}
-    </div>
-  )
-}
-
-function StatCard({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
-  return (
-    <div className="rounded-xl border border-zinc-200 bg-white px-5 py-4">
-      <div className={`text-xl font-semibold mb-0.5 ${mono ? "font-mono text-lg" : ""}`}>{value}</div>
-      <div className="text-xs text-zinc-400">{label}</div>
     </div>
   )
 }
