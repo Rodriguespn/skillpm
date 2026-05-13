@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    {
+      "source": "/.well-known/agent-skills/:path*",
+      "destination": "https://<YOUR_SUPABASE_PROJECT_REF>.supabase.co/functions/v1/registry/:path*"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "name": "skillpm",
+  "version": "0.1.0",
+  "description": "Registry POC for agent skills — implements the .well-known spec with per-skill versioning",
+  "type": "module",
+  "bin": {
+    "skillpm": "./cli/src/index.ts"
+  },
+  "scripts": {
+    "dev": "supabase start",
+    "functions:serve": "supabase functions serve",
+    "db:push": "supabase db push",
+    "deploy:functions": "supabase functions deploy registry && supabase functions deploy publish",
+    "deploy:proxy": "cd proxy && vercel deploy"
+  },
+  "dependencies": {
+    "gray-matter": "^4.0.3",
+    "tar": "^7.5.15"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.0.0"
+  }
+}
